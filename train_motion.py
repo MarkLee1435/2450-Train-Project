@@ -25,7 +25,7 @@ def train_motion(t, y0, p):
     cf_static = 0.7
     wheel_radius = 0.02
     wheel_mass = 0.1
-    density_material = 1400
+    density_material = 4500
     g = 9.81
     
     #ranges
@@ -38,47 +38,54 @@ def train_motion(t, y0, p):
     
     tank_length = 0.2
     tank_radius = 0.05
-    P_gauge = 1000000
+    P_gauge = 125000
     gear_radius = 0.05
     piston_length = 0.1
     piston_radius = 0.04
+    tank_density = 4500 
     
-    
-  #find area of tank
+    #find area of tank
     frontal_area = np.pi * tank_radius**2;
     
     # Assign inputs to variables
     y, v = y0[0:2]
+    
+    if abs(y) > 0 and v < 0:
+        return np.nan * np.ones(2)
 
     # Calculate forces
-    tank_mass = ((np.pi * ))
+    
+    # find total mass except wheel mass    
+    tank_mass = ((np.pi * (tank_radius**2) * tank_length * tank_density))
+    
+    total_mass = train_mass + tank_mass
     
     Ap = np.pi * piston_radius**2;
    
     drag_force = 0.5 * air_density * frontal_area * density_material * drag_coefficient * v**2;
     
-    rolling_friction = train_mass * gravity * rolling_coefficient;
+    rolling_friction = total_mass * gravity * rolling_coefficient;
             
     volume = np.pi * tank_radius**2 * tank_length;
 	# Determine whether accelerating or decelerating
     x_transition = piston_length * wheel_radius/gear_radius;
     
-    #find Ft
-    Ft = ((gear_radius * Ap) /wheel_radius) * ((P_gauge * volume)/(volume + Ap * (gear_radius/wheel_radius) * x_transition) - pressure_atm) 
+    #find Ft    
+    Ft = ((gear_radius * Ap) /wheel_radius) * ((P_gauge * volume)/(volume + Ap * (gear_radius/wheel_radius) * x_transition) - pressure_atm)
     
-    Ft2 = ((gear_radius * Ap) /wheel_radius) * ((P_gauge * volume)/(volume + Ap * (gear_radius/wheel_radius) * x_transition) - pressure_atm) - (wheel_mass*(-rolling_friction -drag_force) )
     # Calculate derivative estimates
     if y < x_transition: # accelerating
-        a = (1/ (train_mass + wheel_mass)) * (Ft - drag_force - rolling_friction) 
+        a = (1/ (total_mass + wheel_mass)) * (Ft - drag_force - rolling_friction) 
     else: # decelerating
-        a = (1/train_mass) * (-drag_force - rolling_friction)
+        a = (1/(total_mass)) * (-drag_force - rolling_friction)
         
     # Check for wheel slip
-    static_friction = cf_static*(train_mass + wheel_mass)/2*g;
-    if (Ft2 - wheel_mass*a*2) >= static_friction:
-        print('Ft = ', Ft2 - wheel_mass*a*2)
+    Ft = ((gear_radius * Ap) /wheel_radius) * ((P_gauge * volume)/(volume + Ap * (gear_radius/wheel_radius) * x_transition) - pressure_atm) - (wheel_mass*a)    
+
+    static_friction = cf_static*(total_mass + wheel_mass)/2*g;
+    if (Ft) > static_friction:
+        print('Ft = ', Ft)
         print('static friction =', static_friction)
-        print (-wheel_mass*(-rolling_friction -drag_force) )
 
         raise ValueError('Configuration results in wheel slippage')
 
