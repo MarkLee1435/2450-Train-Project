@@ -79,15 +79,13 @@ def main():
     final_time = 10.0
     
     tspan = np.linspace(0, final_time, N)
-    for i in range(100):
-        i += 1
-        y0 = np.array([i, i], dtype = float)
-        odefun = lambda t,y: train_motion(tspan, y0, p)
+    y0 = np.array([0, 0], dtype = float)
+    odefun = lambda t,y: train_motion(tspan, y0, p)
     
-        t, y = rk4(odefun, tspan, y0)
+    t, y = rk4(odefun, tspan, y0)
     
-        v = y[:,1]
-        x = y[:,0]
+    v = y[:,1]
+    x = y[:,0]
     
     plot_results(t, x, v, l_track = 12, l_runout = 15)
 
