@@ -12,7 +12,7 @@ def rk4(odefun, tspan, y0):
     num_states = y0.shape[0]
 
     # Initialize the outputs
-    t = np.zeros(num_steps)
+    t = tspan
     y = np.zeros((num_steps, num_states))
 
     # Assign the first row of outputs
@@ -24,18 +24,27 @@ def rk4(odefun, tspan, y0):
 
         # Calculate the slope
         h = tspan[k+1] - tspan[k]
-        k1 = odefun(t[k], y[k,:])
+        k1 = odefun(t[k], y[k,:])       
         k2 = odefun(t[k]+.5*h, y[k,:]+.5*k1*h)
         k3 = odefun(t[k]+.5*h, y[k,:]+.5*k2*h)
         k4 = odefun(t[k]+h, y[k,:]+k3*h)
         
         if np.any(np.isnan(np.array([k1,k2,k3,k4]))):
+            """
+            Checks for wheel slip
+            """
+            return np.array([np.inf]), np.ones(y.shape)*np.inf
+        
+        if np.any(np.isinf(np.array([k1,k2,k3,k4]))):
+            """
+            Checks for when train stops moving
+            """
             return t[:k], y[:k,:]
         
         slope = (k1 + 2*k2 + 2*k3 + k4) / 6.
-
+        
         # Calculate the next state
         y[k+1,:] = y[k,:] + slope * h
-        t[k+1] = tspan[k+1]
+
 
     return t, y

@@ -10,9 +10,11 @@ def interactive_plots(b):
     else:
         plt.ioff()
 
-def plot_results(t, x, v, l_track, l_runout, filename=None, title=None,
+def plot_results(t, y, l_track, l_runout, filename=None, title=None,
                  interactive=False):
-
+   
+    x, v = y[:,0], y[:,1]
+    
     plt.clf()
     plt.cla()
     fig, ax1 = plt.subplots()
@@ -21,7 +23,7 @@ def plot_results(t, x, v, l_track, l_runout, filename=None, title=None,
     ax1.plot(t, x, 'b-')
 
     L = l_track + l_runout
-    ax1.set_ylim(0, L+.05*L)
+    ax1.set_ylim(0, None)
     ax1.set_xlim(0, np.amax(t))
     ax1.set_xlabel('Time (s)')
     ax1.set_ylabel('Distance (m)', color='b')
@@ -56,37 +58,37 @@ def plot_results(t, x, v, l_track, l_runout, filename=None, title=None,
         plt.show()
     else:
         plt.savefig(filename, transparent=True)
+        
+def train_motion_wrapper(const_p, var_p, rho_materials, t_final=20, n=200, return_only_time=True):
+    
+    tspan = np.linspace(0, t_final, n)
+    
+    odefun = lambda t, y: train_motion(t, y, const_p, var_p, material_density=8000)
+    
+    t, y = rk4(odefun, tspan, np.array([0.,0.]))
+    
+    if return_only_time is True:
+        if y[:,0].max() > 12.5 and y[:,0].max() < 10:
+            
+            return np.inf()
+        
+        return t[-1]
+    
+    return t, y
 
 def main():
     
-    p = np.zeros(14)
-    p[0] = 9.81  # gravity
-    p[1] = 1.0  # air density
-    p[2] = 10 # train mass
-    p[3] = 0.05  # frontal area
-    p[4] = 0.8  # drag coefficient
-    p[5] = 0.03  # rolling coefficient
-    p[6] = 100000; # gauge pressure (Pa)
-    p[7] = 0.01; # radius of piston (m)
-    p[8] = 0.01; # radius of gear (m)
-    p[9] = 0.025; # radius of wheel (m)
-    p[10] = 0.1; # mass of wheel (kg)
-    p[11] = 0.7; # coefficient of static friction (between wheel and track)
-    p[12] = 0.1; # piston stroke length (m)
-
-    # Initial values
-    N = 200
-    final_time = 10.0
+    const_p = np.array([1.0, 101324.0, 0.8, 0.03, 0.7, 0.02, 0.1])
+    var_p = np.array([0.25, 0.115, 115000.0, 0.005, 0.3, 0.032])
+    rho_materials = 1200
     
-    tspan = np.linspace(0, final_time, N)
-    y0 = np.array([0, 0], dtype = float)
-    odefun = lambda t,y: train_motion(tspan, y0, p)
+    wrap_of_wrapper = lambda var_params, return_stament: train_motion_wrapper(const_p, var_params, rho_materials, return_only_time=return_stament)
     
-    t, y = rk4(odefun, tspan, y0)
+    print(wrap_of_wrapper(var_p, True), 'yay')
+    print(wrap_of_wrapper(var_p, False), 'boo')
     
-    v = y[:,1]
-    x = y[:,0]
-    
-    plot_results(t, x, v, l_track = 12, l_runout = 15)
+    t , y = wrap_of_wrapper(var_p, False)
+    #import pdb;pdb.set_trace()
+    plot_results(t, y, l_track = 10, l_runout = 2.5)
 
 print(main())
