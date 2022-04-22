@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from rk4 import rk4
+from scipy.optimize import minimize 
 from train_motion import train_motion
 
 def interactive_plots(b):
@@ -77,18 +78,58 @@ def train_motion_wrapper(const_p, var_p, rho_materials, t_final=20, n=200, retur
     return t, y
 
 def main():
-    
+
     const_p = np.array([1.0, 101324.0, 0.8, 0.03, 0.7, 0.02, 0.1])
     var_p = np.array([0.25, 0.115, 115000.0, 0.005, 0.3, 0.032])
-    rho_materials = 1200
+    rho_t = {'PVC':1400, 'acrylic':1200, 'galvanized_steel':7700, 'stainless_steel':8000,
+          'titanium':4500, 'copper':8940, 'aluminium':2700}
+
     
-    wrap_of_wrapper = lambda var_params, return_stament: train_motion_wrapper(const_p, var_params, rho_materials, return_only_time=return_stament)
+    wrap_of_wrapper = lambda var_params: train_motion_wrapper(const_p, var_params, rho_t, return_only_time=False)
     
-    print(wrap_of_wrapper(var_p, True), 'yay')
-    print(wrap_of_wrapper(var_p, False), 'boo')
+    #print(wrap_of_wrapper(var_p, True), 'yay')
+    #print(wrap_of_wrapper(var_p, False), 'boo')
+    
+    t , y = wrap_of_wrapper(var_p)
+    
+    plot_results(t, y, l_track = 10, l_runout = 2.5)
+    '''
+   
+    Lt = (.2,.3)        # m
+    ro = (0.05, 0.2)    # m
+    P0 = (70000,200000)  # Pa
+    rg = (0.002,0.01)   # m
+    Ls = (0.1,0.5)      # m         
+    rp = (0.02, 0.05)   # m
+    
+    rho_air = 1.0
+    P_atm = 101324.0
+    C_d = 0.8
+    C_r = 0.03
+    mu_s = 0.7
+    r_w = 0.02
+    m_w = 0.1
     
     t , y = wrap_of_wrapper(var_p, False)
-    #import pdb;pdb.set_trace()
+    
     plot_results(t, y, l_track = 10, l_runout = 2.5)
-
+    bounds = (Lt, ro, P0, rg, Ls, rp)
+    var_p = np.array([Lt, ro, P0, rg, Ls, rp])
+    const_p = np.array([rho_air, P_atm,C_d, C_r, mu_s, r_w, m_w])
+    keys = rho_t.keys()
+    times = []
+    x0 = var_p
+    
+    for key in keys:
+        
+        const_p = np.array([rho_air, P_atm,C_d, C_r, mu_s, r_w, m_w])
+        
+        drive = wrap_of_wrapper() 
+        
+        res = minimize(drive, x0, bounds = bounds, method='Nelder-Mead')
+        
+        times.append(drive(res.x))
+        
+        print('the outputs of minization are:\n', x0, times, file = open)
+        '''
 print(main())

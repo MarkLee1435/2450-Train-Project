@@ -20,9 +20,11 @@ def train_motion(t, y0, const_p, var_p, material_density = 1200):
     
     #find area of tank
     ri = r_0/1.15  #inner radius
+    
     L_p = 1.5 * L_r
     frontal_area = np.pi * r_0**2; 
     
+    #print(ri,L_p, frontal_area)
     # Assign inputs to variables
     x, v = y0[0], y0[1]
     
@@ -35,6 +37,7 @@ def train_motion(t, y0, const_p, var_p, material_density = 1200):
     Ap = np.pi * r_p**2
     
     piston_mass = Ap * L_p * 1250
+    
     tank_mass = (((np.pi * (r_0**2) * L_t) - (np.pi * (ri**2) * L_t)) * rho_t)
     
     total_mass = tank_mass + piston_mass + (2*m_w)
@@ -43,7 +46,9 @@ def train_motion(t, y0, const_p, var_p, material_density = 1200):
     
     rolling_friction = total_mass * 9.81 * C_r
     
-    V0 =  np.pi * (r_p**2)# something has to be wrong here
+    V0 =  np.pi * (r_p**2) 
+    
+    #print(Ap, piston_mass, tank_mass, total_mass, drag_force, rolling_friction, V0)
     
     # Determine whether accelerating or decelerating
     x_transition = L_p * r_w/r_g
