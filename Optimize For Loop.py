@@ -1,88 +1,86 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Apr 16 13:37:22 2022
+Created on Fri Apr 22 07:14:17 2022
 
-@author: Bfelts
-
-Variable Optimization
-
+@author: Owner
 """
-from moving_train import main
-from train_motion import *
 
+from moving_train import t_at_finish
 import numpy as np
 
-#Initial Values
-t_opt = 1e6
-
-#Constants
-wheel_radius = .02 #meters
-
-#Define ranges for physical parameters 
-tank_length = np.arange(0.2,0.301,.01) #meters
-tank_radius = np.arange(0.05,0.201,.01) #meters
-trainMat_rho = 1400 #kg/m^3 for PVC
-tank_P0 = np.arange(70000,201000,1000) #Pa
-gear_radius = np.arange(.002,.011,.001) #m
-piston_strokeLength = np.arange(.1,.6,.1)
-piston_radius = np.arange(.02,.05,.01)
-
-#Design constraints
-maxTrain_height = .23 #meters
-maxTrain_width = .2 #meters
-maxTrain_length = 1.5 #meters
-travel_distance = 12.5 #meters
-
-#Some Equations
-piston_length = 1.5 * piston_strokeLength
-
-#For loops to optimize conditions
-for i in range(np.size(tank_length)):
-    for j in range(np.size(tank_radius)):
-        for k in range(np.size(tank_P0)):
-            for l in range(np.size(gear_radius)):
-                for m in range(np.size(piston_strokeLength)):
-                    for n in range(np.size(piston_radius)):
-                        
-                        #Intermidate equations
-                        piston_length = 1.5 * piston_strokeLength[m]
-                        train_height = 2*tank_radius[j] + 2*wheel_radius
-                        train_width = 2*tank_radius[j]
-                        train_length = piston_length + tank_length[i]
-                        
-                        #Call train_motion to determine t@10 meters & our final horizontal distance
-                        t,xfinal = train_motion(tank_length[i], tank_radius[j], tank_P0[k], gear_radius[l], piston_strokeLength[m], piston_radius[n])
-                        
-                        #Check design Constraints 
-                        #Wheel slippage is being used within train_motion 
-                        #If slippage is detected xfinal = 100 m and will not pass final check
-                        if train_height < maxTrain_height:
-                            if train_width < maxTrain_width:
-                                if train_length < maxTrain_length:
-                                    if (gear_radius)/(wheel_radius) < 1:
-                                        if 10<=xfinal<=12.5:
-                                            if t_opt > t:
-                                                t_opt = t
-                                                tank_L_opt = tank_length[i]
-                                                tank_r_opt = tank_radius[j]
-                                                tank_P0_opt = tank_P0[k]
-                                                gear_r_opt = gear_radius[l]
-                                                piston_stroke_opt = piston_strokeLength[m]
-                                                piston_r_opt = piston_radius[n]
-
-opt_params = [tank_L_opt, tank_r_opt, tank_P0_opt, gear_r_opt, piston_stroke_opt, piston_r_opt]
-# Plot distance traveled and train velocity versus time
-                                                                                             
-a = main(opt_params) 
-print(a)                                        
-                                              
-                                                
-                                        
-                        
-                        
 
 
 
+'''State Physical Params'''
+r_w = 0.02 #meters
+t_opt = 1e6 #seconds
 
-         
+'''Make var_p array & var_p_opt'''
+var_p = np.zeros([6,1])
+var_p_opt = np.zeros([6,1])
+
+'''Make parameters for the array'''
+L_t = np.arange(0.2,0.301,.01) #meters
+r_0 = np.arange(0.05, 0.2, .001) #meters
+P0_gauge = np.arange(70000,200000,10000) #Pascals
+r_g = np.arange(0.002,0.01,.001) #meters
+L_r = np.arange(0.1,0.5,0.1) #meters
+r_p = np.arange(0.02,0.04,0.01) #meters
+
+rho_t = [1400,1200,7700,8000,4500,8940,2700] #kg/m^3
+
+'''Set Constraints'''
+max_height = 0.23 #meters
+max_width = 0.2 #meters
+max_length = 1.5 #meters
+max_gear = r_g/r_w 
+
+
+'''For Loop to Brute Force optimize'''
+    
+for i in range(np.size(rho_t)):
+    for j in range(np.size(L_t)):
+        for k in range(np.size(r_0)):
+            for l in range(np.size(P0_gauge)):
+                for m in range(np.size(r_g)):
+                    for n in range(np.size(L_r)):
+                        for o in range(np.size(r_p)):
+                            
+                            #Material Density
+                            rho_mat = rho_t[i]
+                            
+                            #Variable Params
+                            var_p[0] = L_t[j]
+                            var_p[1] = r_0[k]
+                            var_p[2] = P0_gauge[l]
+                            var_p[3] = r_g[m]
+                            var_p[4] = L_r[n]
+                            var_p[5] = r_p[o]
+                            
+                            #Find tie to finish with parameters
+                            t_finish = t_at_finish(var_p, rho_mat, return_only_time=True)
+                            
+                            #Filter results that violate constraints
+                            if (2*r_w + 2*r_0[k] < max_height) and (2*r_0[k] < max_width) and (L_r[n]+L_t[j] < max_length) and (r_g[m]/r_w < 1) and t_finish < t_opt:
+                                #Finish optimal
+                                t_opt = t_finish   
+                                
+                                #Optimal parameters
+                                var_p_opt[0] = L_t[j]
+                                var_p_opt[1] = r_0[k]
+                                var_p_opt[2] = P0_gauge[l]
+                                var_p_opt[3] = r_g[m]
+                                var_p_opt[4] = L_r[n]
+                                var_p_opt[5] = r_p[o]
+                                
+                                rho_mat_opt = rho_mat[i]
+                                
+print(t_opt)
+print(var_p_opt)
+                                
+                                
+                                
+
+
+
 

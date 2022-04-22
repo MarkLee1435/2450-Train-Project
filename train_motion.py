@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Apr 16 13:37:21 2022
+
+@author: Owner
+"""
+
 import numpy as np
 
 def train_motion(t, y0, const_p, var_p, material_density = 1200):
