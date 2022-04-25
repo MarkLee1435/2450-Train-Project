@@ -128,15 +128,18 @@ def t_at_finish(var_p, rho_material, return_only_time=True):
             t_at_finish = x[i,1]
             
             break
+        if x[-1,0] > 12.5:
+            
+            t_at_finish = 1e6
         
     return t_at_finish
-    
-rho_material = 8000
 
+const_p = np.array([1.0, 101324.0, 0.8, 0.03, 0.7, 0.02, 0.1])
 var_p = np.array([0.25, 0.115, 115000.0, 0.005, 0.3, 0.032])
-a = t_at_finish(var_p, rho_material, return_only_time=False)    
-
-print(a)
+rho_material = 8000 #kg/m^3 stainless steel
+  
+#print(t_at_finish(var_p, rho_material, return_only_time=False))  
+print(main())
     
     
     

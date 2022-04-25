@@ -5,6 +5,7 @@ Created on Sat Apr 16 13:37:21 2022
 @author: Owner
 """
 
+
 import numpy as np
 
 def train_motion(t, y0, const_p, var_p, material_density = 1200):
@@ -68,7 +69,6 @@ def train_motion(t, y0, const_p, var_p, material_density = 1200):
     dvdt_deceleration = lambda v: (1/(total_mass)) * (-drag_force - rolling_friction)
  
     static_friction = mu_s * (total_mass / 2) * 9.81
-    
     if x < x_transition:
         dvdt = dvdt_acceleration(x, v)
     else:
@@ -76,8 +76,8 @@ def train_motion(t, y0, const_p, var_p, material_density = 1200):
         
     # Check for wheel slip
     if Ft > static_friction:
-        print('Ft = ', Ft, 'static friction', static_friction)
-        print('Configuration results in wheel slippage')
+        #print('Ft = ', Ft, 'static friction', static_friction)
+        #print('Configuration results in wheel slippage')
         return np.array([np.nan, np.nan])
  
         
